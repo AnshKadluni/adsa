@@ -11,14 +11,14 @@ string schoolAddition(string num1, string num2, int base) {
     int carry = 0;
 
     while (i >= 0 || j >= 0) {
-        //cout << i << ' ' << j << endl;
+        
         int curr = carry;
         if (i >= 0) {
-            curr += int(num1[i] - 48);
+            curr += int(num1[i] - 48); // in-built subtraction for converting char to int
             --i;
         }
         if (j >= 0) {
-            curr += int(num2[j] - 48);
+            curr += int(num2[j] - 48); // in-built subtraction for converting char to int
             --j;
         }
 
@@ -30,17 +30,16 @@ string schoolAddition(string num1, string num2, int base) {
 
     if (carry != 0) sum = to_string(carry) + sum;
 
-    
-    while (sum[0] == '0') {
-        sum.erase(sum.begin());
-    }
+    // removing zeros in front
+    while (sum[0] == '0') sum.erase(sum.begin());
 
-    if (sum.size() == 0) sum = "0";
+    // if string is empty it must be 0
+    if (sum.empty()) sum = "0";
     
-
     return sum;
 }
 
+// subtraction works if num1 >= num2 as karatsuba guarantees it
 string schoolSubtraction(string num1, string num2, int base) {
     string sub = "";
 
@@ -50,35 +49,45 @@ string schoolSubtraction(string num1, string num2, int base) {
     int take = 0;
 
     while (i >= 0 || j >= 0) {
-        //cout << i << ' ' << j << endl;
+        
         int curr  = -take;
         if (i >= 0) {
-            curr += int(num1[i] - 48);
+            curr += int(num1[i] - 48); // in-built subtraction for converting char to int
             --i;
         }
         if (j >= 0) {
-            curr -= int(num2[j] - 48);
+            curr -= int(num2[j] - 48); // in-built subtraction for converting char to int
             --j;
         }
-        
+
+        take = 0;
+
         if (curr < 0) {
             curr += base;
             take = 1;
-        } else {
-            take = 0;
         }
 
         sub = to_string(curr%base) + sub;
 
     }
 
-    while (sub[0] == '0') {
-        sub.erase(sub.begin());
-    }
+    while (sub[0] == '0') sub.erase(sub.begin()); // removing 0s in front
 
-    if (sub.size() == 0) sub = "0";
+    if (sub.size() == 0) sub = "0"; // setting empty string to 0
     
     return sub;
+}
+
+// for splitting the numbers
+vector<string> splitNumber(string num, int k) {
+    vector<string> res(2, "");
+
+    int n = num.size();
+
+    for (int i = 0; i < n-k; ++i) res[1] += num[i];
+    for (int i = n-k; i < n; ++i) res[0] += num[i];
+
+    return res;
 }
 
 string karatsuba(string I1, string I2, int base) {
@@ -86,6 +95,7 @@ string karatsuba(string I1, string I2, int base) {
     string num1;
     string num2;
 
+    // reassigning to keep track of the shorter number
     if (I1.length() < I2.length()) {
         num1 = I1;
         num2 = I2;
@@ -94,67 +104,33 @@ string karatsuba(string I1, string I2, int base) {
         num2 = I1;
     }
 
-    while (num1.size() < num2.size()) {
-        num1 = "0" + num1;
-    }
+    // padding the shorter numbers with zeros to make spliting easier
+    while (num1.size() < num2.size()) num1 = "0" + num1;
 
+    // single digit multiplication
     if (num1.size() == 1) {
-        int n = int(num1[0]-48);
-        string sum = "";
-        int carry = 0;
-        for (char i : num2) {
-            int curr = int(i-48)*n + carry;
-            sum = to_string(curr%base) + sum;
-            carry = curr/base;
-        }
-
-        if (carry != 0) sum = to_string(carry) + sum;
-
-        while (sum[0] == '0') {
-            sum.erase(sum.begin());
-        }
-
-        if (sum.size() == 0) sum = "0";
-
-        return sum;
+        int prod = int(num1[0]-48)*int(num2[0]-48); // in-built subtraction for converting to from char to int
+        return to_string(prod/base) + to_string(prod%base);
     }
 
-    int k = num1.size() >> 1;
+    int k = num1.size() >> 1; // index for split the numbers
 
-    string a0 = "";
-    string b0 = "";
-    string b1 = "";
-    string a1 = "";
+    // spliting the numbers
 
-    for (int i = num1.size()-1; i >= num1.size()-k; --i) a0 = num1[i] + a0;
-    for (int i = num2.size()-1; i >= num2.size()-k; --i) b0 = num2[i] + b0;
+    vector<string> a = splitNumber(num1, k);
+    vector<string> b = splitNumber(num2, k);
 
-    for (int i = num1.size()-k-1; i >= 0; --i) a1 = num1[i] + a1;
-    for (int i = num2.size()-k-1; i >= 0; --i) b1 = num2[i] + b1;
+    // doing intermediate calcualtion 
 
+    string p2 = karatsuba(a[1], b[1], base);
+    string p0 = karatsuba(a[0], b[0], base);
+    string p1 = schoolSubtraction(karatsuba(schoolAddition(b[1], b[0], base), schoolAddition(a[1], a[0], base), base), schoolAddition(p0, p2, base), base);
 
-    //cout << a1 << ' ' << a0 << endl;
-    //cout << b1 << ' ' << b0 << endl;
-
-    
-    string p2 = karatsuba(a1, b1, base);
-    string p0 = karatsuba(a0, b0, base);
-    string x = karatsuba(schoolAddition(b1, b0, base), schoolAddition(a1, a0, base), base);
-    //cout << x << endl;
-    string p1 = schoolSubtraction(x, schoolAddition(p0, p2, base), base);
-    
-
-    //cout << p1 << ' ' << schoolAddition(p0, p2, base) << endl;
-
-    //cout << "p1: " << p1 << endl;
-
+    // multiplying by B^k and B^2k
     for (int i = 0; i < 2*k; ++i) p2 += '0';
     for (int i = 0; i < k; ++i) p1 += '0';
 
     string prod = schoolAddition(schoolAddition(p2, p1, base), p0, base);
-    //cout << p2 << ' ' << p1 << ' ' << p0 << endl << endl;
-
-    //string prod = schoolAddition(p2, p1, base);
 
     return prod;
 }
@@ -168,13 +144,7 @@ int main(void) {
 
     cin >> I1 >> I2 >> B;
 
-
-    //cout << schoolAddition(I1, I2, B) << ' ' << karatsuba(I1, I2, B) << " 0" <<  endl;
-
     cout << schoolAddition(I1, I2, B) << " " << karatsuba(I1, I2, B) << " 0" << endl;
-
-    //cout << schoolSubtraction("100", "11", 2) << endl;
-    
 
     return 0;
 }
