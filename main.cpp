@@ -10,16 +10,166 @@ class Node {
         Node* left;
         Node* right;
 
-        Node(int v, int h) : val(v), height(h), bf(0), left(nullptr), right(nullptr) {};
+        Node(int v) : val(v), height(0), bf(0), left(nullptr), right(nullptr) {};
 };
 
-int getBF(Node* curr);
+class Tree {
+    public:
+        Node* head;
+        Tree() : head(nullptr) {};
 
-int insert(Node*& curr, int val);
+        void insert(int& val) {
+            insertHelper(head, val);
+        }
 
-void traverse(Node*& curr);
+        int insertHelper(Node*& curr, int& v) {
+            if (curr == nullptr) {
+                curr = new Node(v);
+                return 0;
+            }
 
-void leftLeftRotation(Node*& curr);
+            int x;
+
+            if (curr->val > v) {
+                x = insertHelper(curr->left, v);
+            } else {
+                x = insertHelper(curr->right, v);
+            }            
+            
+            if (x >= curr->height) curr->height = x+1; 
+            calculateBF(curr);
+
+            if (curr->bf < -1) {
+                if (curr->right->bf == -1) {
+                    rightRightRotation(curr);
+                } else {
+                    rightLeftRotation(curr);
+                }
+            } else if (curr->bf > 1) {
+                if (curr->left->bf == 1) {
+                    leftLeftRotation(curr);
+                } else {
+                    leftRightRotation(curr);
+                }
+            }
+
+            return curr->height;
+        }
+
+        void calculateBF(Node*& curr) {
+            if (curr == nullptr) return;
+            int l = curr->left == nullptr ? 0 : curr->left->height+1;
+            int r = curr->right == nullptr ? 0 : curr->right->height+1;
+
+            curr->bf = l - r;
+        }
+
+        void leftLeftRotation(Node*& curr) {
+            Node* temp = curr->left; // B sub tree
+
+            curr->left = temp->right; // A left set to B right
+
+            temp->right = curr; // B left set to A
+
+            curr = temp; // A set to B
+
+            curr->right->height = curr->height - 1;
+            calculateBF(curr->right);
+            calculateBF(curr);
+        }
+
+        void rightRightRotation(Node*& curr) {
+            Node* temp = curr->right; // just left-left but left becomes right
+
+            curr->right = temp->left;
+
+            temp->left = curr;
+
+            curr = temp;
+
+            curr->left->height = curr->height - 1;
+            calculateBF(curr->left);
+            calculateBF(curr);
+        }
+
+        void leftRightRotation(Node*& curr) {
+            Node* temp = curr->left->right;
+            
+            curr->left->right = temp->left;
+
+            temp->left = curr->left;
+
+            curr->left = temp;
+            
+            (curr->left->height)++;
+
+            (curr->left->left->height)--;
+
+            calculateBF(curr->left->left);
+            calculateBF(curr->left);
+            calculateBF(curr);
+
+            leftLeftRotation(curr);
+        }
+
+        void rightLeftRotation(Node*& curr) {
+            Node* temp = curr->right->left; // just right left but left <-> right
+            
+            curr->right->left = temp->right;
+
+            temp->right = curr->right;
+
+            curr->right = temp;
+            
+            (curr->right->height)++;
+
+            (curr->right->right->height)--;
+
+            calculateBF(curr->right->right);
+            calculateBF(curr->right);
+            calculateBF(curr);
+
+            rightRightRotation(curr);
+        }
+
+        void printTree(string order) {
+            if (head == nullptr) {
+                cout << "EMPTY" << endl;
+                return;
+            }
+            if (order == "IN") {
+                inOrder(head);
+            } else if (order == "POST") {
+                postOrder(head);
+            } else {
+                preOrder(head);
+            }
+        }
+
+        void preOrder(Node* curr) {
+            if (curr == nullptr) return;
+
+            preOrder(curr->left);
+            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            preOrder(curr->right);
+        }
+
+        void inOrder(Node* curr) {
+            if (curr == nullptr) return;
+
+            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            inOrder(curr->left);
+            inOrder(curr->right);
+        }
+
+        void postOrder(Node *curr) {
+            if (curr == nullptr) return;
+
+            postOrder(curr->left);
+            postOrder(curr->right);
+            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+        }
+};
 
 int main(void) {
 
@@ -28,10 +178,10 @@ int main(void) {
     stringstream ss(input);
     string token;
 
-    Node* root = nullptr;
+    Tree t;
 
     while (ss >> token) {
-        if (token == "PRE" || token == "IN" || token == "POST") break;
+        if (token == "PRE" || token == "POST" || token == "IN") continue;
         char opp = token[0];
         char temp[token.size()];
         for (int i = 1; i < token.size(); ++i) {
@@ -39,74 +189,10 @@ int main(void) {
         }
         int val = atoi(temp);
 
-        insert(root, val);
-
+        t.insert(val);
     }
 
-    //leftLeftRotation(root);
-    traverse(root);
+    t.printTree(token);
 
     return 0;
-}
-
-int getBF(Node* curr) {
-    if (curr == nullptr) return 0;
-    int bf = 0;
-    if (curr->left != nullptr) bf += curr->left->height;
-    if (curr->right != nullptr) bf -= curr->right->height;
-
-    return bf;
-}
-
-int insert(Node*& curr, int val) {
-    if (curr == nullptr) {
-        curr = new Node(val, 0);
-        return 1;
-    }
-
-    int x;
-
-    if (curr->val < val) {
-        x = insert(curr->right, val);   
-    } else {
-        x = insert(curr->left, val);
-    }
-
-    if (x > curr->height) {
-        (curr->height)++;
-    }     
-
-    curr->bf = getBF(curr);
-
-    if (curr->bf > 1) {
-        int a = curr->left == nullptr ? 0 : curr->left->height + 1;
-        int b = curr->right == nullptr ? 0 : curr->right->height + 1;
-        if (a > b) leftLeftRotation(curr);
-    }
-
-    return curr->height+1;
-}
-
-void traverse(Node*& curr) {
-    if (curr == nullptr) return;
-
-    traverse(curr->left);
-    cout << curr->val << ' ' << curr->height << ' ' << curr->bf << endl;
-    traverse(curr->right);
-}
-
-void leftLeftRotation(Node*& curr) {
-
-    Node* temp = curr->left; // B sub tree
-
-    curr->left = temp->right; // A left set to B right
-
-    temp->right = curr; // B left set to A
-
-    curr = temp; // A set to B
-
-    (curr->height)--;
-    curr->right->height = curr->height;
-    curr->right->bf = getBF(curr->right);
-    curr->bf = getBF(curr);
 }
