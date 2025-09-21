@@ -52,7 +52,7 @@ class Tree {
         // swap nodes and repeat down
 
         Node* deleteNodeHelper(Node*& curr, int& v) {
-            // deleting leaf
+            
             if (curr == nullptr) return nullptr;
 
             if (curr->val > v) {
@@ -225,11 +225,8 @@ int main(void) {
     while (ss >> token) {
         if (token == "PRE" || token == "POST" || token == "IN") continue;
         char opp = token[0];
-        char temp[token.size()];
-        for (int i = 1; i < int(token.size()); ++i) {
-            temp[i-1] = token[i];
-        }
-        int val = atoi(temp);
+
+        int val = stoi(token.substr(1));
 
         if (opp == 'A') {
             t.insert(val);
