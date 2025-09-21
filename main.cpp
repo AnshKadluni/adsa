@@ -38,23 +38,63 @@ class Tree {
             
             if (x >= curr->height) curr->height = x+1; 
             calculateBF(curr);
+            balanceTree(curr);
+            return curr->height;
+        }
 
-            if (curr->bf < -1) {
-                if (curr->right->bf == -1) {
-                    rightRightRotation(curr);
-                } else {
-                    rightLeftRotation(curr);
+        void deleteNode(int val) {
+            deleteNodeHelper(head, val);
+        }
+
+        // find node to delete
+        // -> if node not found, do nothing
+        // if found search for right most node in the left subtree 
+        // swap nodes and repeat down
+
+        Node* deleteNodeHelper(Node*& curr, int& v) {
+            // deleting leaf
+            if (curr == nullptr) return nullptr;
+
+            if (curr->val > v) {
+                curr->left = deleteNodeHelper(curr->left, v);
+            } else if (curr->val < v) {
+                curr->right = deleteNodeHelper(curr->right, v);
+            } else {
+                if (curr->left == nullptr && curr->right == nullptr) {
+                    delete curr;
+                    return nullptr;
                 }
-            } else if (curr->bf > 1) {
-                if (curr->left->bf == 1) {
-                    leftLeftRotation(curr);
+
+                if (curr->left != nullptr && curr->right != nullptr) {
+                    Node* temp = curr->left;
+                    while (temp->right != nullptr) {
+                        temp = temp->right;
+                    }
+
+                    curr->val = temp->val;
+
+                    curr->left = deleteNodeHelper(curr->left, temp->val); // fix the tree
                 } else {
-                    leftRightRotation(curr);
+                    Node* temp = curr->left == nullptr ? curr->right : curr->left;
+                    *curr = *temp;
+                    delete temp;
                 }
             }
 
-            return curr->height;
+            int a = curr->left == nullptr ? 0 : curr->left->height;
+            int b = curr->right == nullptr ? 0 : curr->right->height;
+            curr->height = 1 + max(a, b);
+            calculateBF(curr);
+            balanceTree(curr);
+            return curr;
         }
+
+        void balanceTree(Node*& curr) {
+            if (curr->bf < -1 && curr->right->bf < 0) rightRightRotation(curr);
+            if (curr->bf < -1 && curr->right->bf > 0) rightLeftRotation(curr);     
+            if (curr->bf > 1 && curr->left->bf > 0) leftLeftRotation(curr);
+            if (curr->bf > 1 && curr->left->bf < 0) leftRightRotation(curr);
+        } 
 
         void calculateBF(Node*& curr) {
             if (curr == nullptr) return;
@@ -79,7 +119,7 @@ class Tree {
         }
 
         void rightRightRotation(Node*& curr) {
-            Node* temp = curr->right; // just left-left but left becomes right
+            Node* temp = curr->right; // just left-left but swap left and right
 
             curr->right = temp->left;
 
@@ -144,20 +184,22 @@ class Tree {
             } else {
                 preOrder(head);
             }
+
+            cout << endl;
         }
 
         void preOrder(Node* curr) {
             if (curr == nullptr) return;
 
             preOrder(curr->left);
-            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            cout << curr->val << ' ';
             preOrder(curr->right);
         }
 
         void inOrder(Node* curr) {
             if (curr == nullptr) return;
 
-            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            cout << curr->val << ' ';
             inOrder(curr->left);
             inOrder(curr->right);
         }
@@ -167,7 +209,7 @@ class Tree {
 
             postOrder(curr->left);
             postOrder(curr->right);
-            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            cout << curr->val << ' ';
         }
 };
 
@@ -184,12 +226,17 @@ int main(void) {
         if (token == "PRE" || token == "POST" || token == "IN") continue;
         char opp = token[0];
         char temp[token.size()];
-        for (int i = 1; i < token.size(); ++i) {
+        for (int i = 1; i < int(token.size()); ++i) {
             temp[i-1] = token[i];
         }
         int val = atoi(temp);
 
-        t.insert(val);
+        if (opp == 'A') {
+            t.insert(val);
+        } else {
+            t.deleteNode(val);
+        }
+
     }
 
     t.printTree(token);
