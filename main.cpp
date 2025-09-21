@@ -43,7 +43,7 @@ class Tree {
         }
 
         void deleteNode(int val) {
-            deleteNodeHelper(head, val);
+            head = deleteNodeHelper(head, val);
         }
 
         // find node to delete
