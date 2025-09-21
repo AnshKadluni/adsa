@@ -99,10 +99,19 @@ class Tree {
 
             int x = calculateFactors(curr);
 
-            if (x > 1 && calculateFactors(curr->left) >= 0) curr = leftLeftRotation(curr);
-            if (x > 1 && calculateFactors(curr->left) < 0) curr = leftRightRotation(curr);
-            if (x < -1 && calculateFactors(curr->right) <= 0) curr = rightRightRotation(curr);
-            if (x < -1 && calculateFactors(curr->right) > 0) curr = rightLeftRotation(curr);
+            if (x > 1) {
+                if (calculateFactors(curr->left) >= 0) {
+                    curr = leftLeftRotation(curr);
+                } else {
+                    curr = leftRightRotation(curr);
+                }
+            } else if (x < -1) {
+                if (calculateFactors(curr->right) <= 0) {
+                    curr = rightRightRotation(curr);
+                } else {
+                    curr = rightLeftRotation(curr);
+                }
+            }
 
             return curr;
         }
@@ -142,11 +151,20 @@ class Tree {
 
             int x = calculateFactors(curr);
 
-            if (x > 1 && calculateFactors(curr->left) >= 0) curr = leftLeftRotation(curr);
-            if (x > 1 && calculateFactors(curr->left) < 0) curr = leftRightRotation(curr);
-            if (x < -1 && calculateFactors(curr->right) <= 0) curr = rightRightRotation(curr);
-            if (x < -1 && calculateFactors(curr->right) > 0) curr = rightLeftRotation(curr);
-
+            if (x > 1) {
+                if (calculateFactors(curr->left) >= 0) {
+                    curr = leftLeftRotation(curr);
+                } else {
+                    curr = leftRightRotation(curr);
+                }
+            } else if (x < -1) {
+                if (calculateFactors(curr->right) <= 0) {
+                    curr = rightRightRotation(curr);
+                } else {
+                    curr = rightLeftRotation(curr);
+                }
+            }
+            
             return curr;
         }
 
