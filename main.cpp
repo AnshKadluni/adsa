@@ -91,16 +91,18 @@ class Tree {
 
             if (curr->val > v) {
                 curr->left = insertNodeHelper(curr->left, v);
-            } else {
+            } else if (curr->val < v) {
                 curr->right = insertNodeHelper(curr->right, v);
+            } else {
+                return curr;
             }
 
             int x = calculateFactors(curr);
 
-            if (x > 1 && calculateFactors(curr->left) > 0) curr = leftLeftRotation(curr);
+            if (x > 1 && calculateFactors(curr->left) >= 0) curr = leftLeftRotation(curr);
             if (x > 1 && calculateFactors(curr->left) < 0) curr = leftRightRotation(curr);
-            if (x < -1 && calculateFactors(curr->right) > 0) curr = rightRightRotation(curr);
-            if (x < -1 && calculateFactors(curr->right) < 0) curr = rightLeftRotation(curr);
+            if (x < -1 && calculateFactors(curr->right) <= 0) curr = rightRightRotation(curr);
+            if (x < -1 && calculateFactors(curr->right) > 0) curr = rightLeftRotation(curr);
 
             return curr;
         }
@@ -117,30 +119,33 @@ class Tree {
             } else if (curr->val < v) {
                 curr->right = deleteNodeHelper(curr->right, v);
             } else {
-                if (curr->right == nullptr && curr->left == nullptr) {
-                    delete curr;
-                    return nullptr;
-                }
 
-                if (curr->right != nullptr && curr->left != nullptr) {
+                if (curr->right == nullptr || curr->left == nullptr) {
+                    Node* temp = curr->left == nullptr ? curr->right : curr->left;
+
+                    delete curr;
+
+                    return temp;
+                } else {
                     Node* temp = curr->left;
 
                     while (temp->right != nullptr) {
                         temp = temp->right;
                     }
 
-                    *curr = *temp;
-                    
+                    curr->val = temp->val;
                     curr->left = deleteNodeHelper(curr->left, temp->val);
-
-                    return curr;
                 }
-
-                Node* temp = curr->left == nullptr ? curr->right : curr->left;
-
-                delete curr;
-                return temp;
             }
+
+            if (curr == nullptr) return nullptr;
+
+            int x = calculateFactors(curr);
+
+            if (x > 1 && calculateFactors(curr->left) >= 0) curr = leftLeftRotation(curr);
+            if (x > 1 && calculateFactors(curr->left) < 0) curr = leftRightRotation(curr);
+            if (x < -1 && calculateFactors(curr->right) <= 0) curr = rightRightRotation(curr);
+            if (x < -1 && calculateFactors(curr->right) > 0) curr = rightLeftRotation(curr);
 
             return curr;
         }
@@ -162,20 +167,20 @@ class Tree {
             cout << endl;
         }
 
-        void preOrder(Node* curr) {
-            if (curr == nullptr) return;
-
-            preOrder(curr->left);
-            cout << curr->val << ' ';
-            preOrder(curr->right);
-        }
-
         void inOrder(Node* curr) {
             if (curr == nullptr) return;
 
-            cout << curr->val << ' ';
             inOrder(curr->left);
+            cout << curr->val << ' ';
             inOrder(curr->right);
+        }
+
+        void preOrder(Node* curr) {
+            if (curr == nullptr) return;
+
+            cout << curr->val << ' ';
+            preOrder(curr->left);
+            preOrder(curr->right);
         }
 
         void postOrder(Node *curr) {
