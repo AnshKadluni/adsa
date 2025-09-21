@@ -6,11 +6,10 @@ class Node {
     public:
         int val;
         int height;
-        int bf;
         Node* left;
         Node* right;
 
-        Node(int v) : val(v), height(0), bf(0), left(nullptr), right(nullptr) {};
+        Node(int v) : val(v), height(0), left(nullptr), right(nullptr) {};
 };
 
 class Tree {
@@ -18,120 +17,135 @@ class Tree {
         Node* head;
         Tree() : head(nullptr) {};
 
-        void insert(int& val) {
-            insertHelper(head, val);
+        int calculateFactors(Node*& curr) {
+            if (curr == nullptr) return 0;
+
+            int a = curr->left == nullptr ? -1 : curr->left->height;
+            int b = curr->right == nullptr ? -1 : curr->right->height;
+
+            curr->height = 1 + max(a, b);
+
+            return a - b; // balance factor
         }
 
-        int insertHelper(Node*& curr, int& v) {
-            if (curr == nullptr) {
-                curr = new Node(v);
-                return 0;
-            }
+        Node* leftLeftRotation(Node*& curr) {
+            Node* Y = curr->left->right;
+            Node* B = curr->left;
 
-            int x;
+            B->right = curr;
+            curr->left = Y;
+
+            calculateFactors(curr);
+            calculateFactors(B);
+
+            return B;
+        }
+
+        Node* rightRightRotation(Node*& curr) {
+            Node* Y = curr->right->left;
+            Node* B = curr->right;
+
+            B->left = curr;
+            curr->right = Y;
+
+            calculateFactors(curr);
+            calculateFactors(B);
+
+            return B;
+        }
+
+        Node* leftRightRotation(Node*& curr) {
+            Node* A = curr->left;
+            Node* B = curr->left->right;
+
+            A->right = B->left;
+            B->left = A;
+            curr->left = B;
+
+            calculateFactors(A);
+            calculateFactors(B);
+
+            return leftLeftRotation(curr);
+        } 
+
+        Node* rightLeftRotation(Node*& curr) {
+            Node* A = curr->right;
+            Node* B = curr->right->left;
+
+            A->left = B->right;
+            B->right = A;
+            curr->right = B;
+
+            calculateFactors(A);
+            calculateFactors(B);
+
+            return rightRightRotation(curr);
+        }
+
+        void insertNode(int val) {
+            head = insertNodeHelper(head, val);
+        }
+
+        Node* insertNodeHelper(Node*& curr, int v) {
+            if (curr == nullptr) return new Node(v);
 
             if (curr->val > v) {
-                x = insertHelper(curr->left, v);
+                curr->left = insertNodeHelper(curr->left, v);
             } else {
-                x = insertHelper(curr->right, v);
-            }            
-            
-            if (x >= curr->height) curr->height = x+1; 
-            calculateBF(curr);
-
-            if (curr->bf < -1) {
-                if (curr->right->bf == -1) {
-                    rightRightRotation(curr);
-                } else {
-                    rightLeftRotation(curr);
-                }
-            } else if (curr->bf > 1) {
-                if (curr->left->bf == 1) {
-                    leftLeftRotation(curr);
-                } else {
-                    leftRightRotation(curr);
-                }
+                curr->right = insertNodeHelper(curr->right, v);
             }
 
-            return curr->height;
+            int x = calculateFactors(curr);
+
+            if (x > 1 && calculateFactors(curr->left) > 0) curr = leftLeftRotation(curr);
+            if (x > 1 && calculateFactors(curr->left) < 0) curr = leftRightRotation(curr);
+            if (x < -1 && calculateFactors(curr->right) > 0) curr = rightRightRotation(curr);
+            if (x < -1 && calculateFactors(curr->right) < 0) curr = rightLeftRotation(curr);
+
+            return curr;
         }
 
-        void calculateBF(Node*& curr) {
-            if (curr == nullptr) return;
-            int l = curr->left == nullptr ? 0 : curr->left->height+1;
-            int r = curr->right == nullptr ? 0 : curr->right->height+1;
-
-            curr->bf = l - r;
+        void deleteNode(int val) {
+            head = deleteNodeHelper(head, val);
         }
 
-        void leftLeftRotation(Node*& curr) {
-            Node* temp = curr->left; // B sub tree
+        Node* deleteNodeHelper(Node*& curr, int v) {
+            if (curr == nullptr) return nullptr;
 
-            curr->left = temp->right; // A left set to B right
+            if (curr->val > v) {
+                curr->left = deleteNodeHelper(curr->left, v);
+            } else if (curr->val < v) {
+                curr->right = deleteNodeHelper(curr->right, v);
+            } else {
+                if (curr->right == nullptr && curr->left == nullptr) {
+                    delete curr;
+                    return nullptr;
+                }
 
-            temp->right = curr; // B left set to A
+                if (curr->right != nullptr && curr->left != nullptr) {
+                    Node* temp = curr->left;
 
-            curr = temp; // A set to B
+                    while (temp->right != nullptr) {
+                        temp = temp->right;
+                    }
 
-            curr->right->height = curr->height - 1;
-            calculateBF(curr->right);
-            calculateBF(curr);
+                    *curr = *temp;
+                    
+                    curr->left = deleteNodeHelper(curr->left, temp->val);
+
+                    return curr;
+                }
+
+                Node* temp = curr->left == nullptr ? curr->right : curr->left;
+
+                delete curr;
+                return temp;
+            }
+
+            return curr;
         }
 
-        void rightRightRotation(Node*& curr) {
-            Node* temp = curr->right; // just left-left but left becomes right
-
-            curr->right = temp->left;
-
-            temp->left = curr;
-
-            curr = temp;
-
-            curr->left->height = curr->height - 1;
-            calculateBF(curr->left);
-            calculateBF(curr);
-        }
-
-        void leftRightRotation(Node*& curr) {
-            Node* temp = curr->left->right;
-            
-            curr->left->right = temp->left;
-
-            temp->left = curr->left;
-
-            curr->left = temp;
-            
-            (curr->left->height)++;
-
-            (curr->left->left->height)--;
-
-            calculateBF(curr->left->left);
-            calculateBF(curr->left);
-            calculateBF(curr);
-
-            leftLeftRotation(curr);
-        }
-
-        void rightLeftRotation(Node*& curr) {
-            Node* temp = curr->right->left; // just right left but left <-> right
-            
-            curr->right->left = temp->right;
-
-            temp->right = curr->right;
-
-            curr->right = temp;
-            
-            (curr->right->height)++;
-
-            (curr->right->right->height)--;
-
-            calculateBF(curr->right->right);
-            calculateBF(curr->right);
-            calculateBF(curr);
-
-            rightRightRotation(curr);
-        }
-
+        // traversal
         void printTree(string order) {
             if (head == nullptr) {
                 cout << "EMPTY" << endl;
@@ -144,20 +158,22 @@ class Tree {
             } else {
                 preOrder(head);
             }
+
+            cout << endl;
         }
 
         void preOrder(Node* curr) {
             if (curr == nullptr) return;
 
             preOrder(curr->left);
-            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            cout << curr->val << ' ';
             preOrder(curr->right);
         }
 
         void inOrder(Node* curr) {
             if (curr == nullptr) return;
 
-            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            cout << curr->val << ' ';
             inOrder(curr->left);
             inOrder(curr->right);
         }
@@ -167,7 +183,7 @@ class Tree {
 
             postOrder(curr->left);
             postOrder(curr->right);
-            cout << curr->val << ' ' << curr->height << ' '  << curr->bf << endl;
+            cout << curr->val << ' ';
         }
 };
 
@@ -183,13 +199,14 @@ int main(void) {
     while (ss >> token) {
         if (token == "PRE" || token == "POST" || token == "IN") continue;
         char opp = token[0];
-        char temp[token.size()];
-        for (int i = 1; i < token.size(); ++i) {
-            temp[i-1] = token[i];
-        }
-        int val = atoi(temp);
 
-        t.insert(val);
+        int val = stoi(token.substr(1));
+
+        if (opp == 'A') {
+            t.insertNode(val);
+        } else {
+            t.deleteNode(val);
+        }
     }
 
     t.printTree(token);
