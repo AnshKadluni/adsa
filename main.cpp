@@ -22,24 +22,24 @@ class Tree {
             insertHelper(head, val);
         }
 
-        int insertHelper(Node*& curr, int& v) {
+        void insertHelper(Node*& curr, int& v) {
             if (curr == nullptr) {
                 curr = new Node(v);
-                return 0;
+                return;
             }
 
-            int x;
-
             if (curr->val > v) {
-                x = insertHelper(curr->left, v);
+                insertHelper(curr->left, v);
             } else {
-                x = insertHelper(curr->right, v);
+                insertHelper(curr->right, v);
             }            
             
-            if (x >= curr->height) curr->height = x+1; 
+            int a = curr->left == nullptr ? 0 : curr->left->height;
+            int b = curr->right == nullptr ? 0 : curr->right->height;
+            curr->height = 1 + max(a, b);
+
             calculateBF(curr);
             balanceTree(curr);
-            return curr->height;
         }
 
         void deleteNode(int val) {
