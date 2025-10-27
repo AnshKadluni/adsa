@@ -89,7 +89,7 @@ int main(void) {
     int count = 0;
     int cost = 0;
 
-    for (;i < edges.size(); ++i) {
+    for (;i < (int)edges.size(); ++i) {
         if (count == n-1) break;
         vector<int> curr = edges[i];
         if (U.find(curr[0]) == U.find(curr[1])) {
