@@ -105,7 +105,7 @@ int main(void) {
     }
     
     // find all remaining edges with with weight 0 and add cost to destory
-    for (;i < edges.size(); ++i) {
+    for (;i < (int)edges.size(); ++i) {
         if (edges[i][2] == 0) cost += toInt(destory[edges[i][0]][edges[i][1]]);
     }
 
